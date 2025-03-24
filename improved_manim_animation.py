@@ -1,0 +1,394 @@
+from manim import *
+import numpy as np
+
+class ImprovedContrastiveLearningAnimation(Scene):
+    def construct(self):
+        # Configuration
+        total_steps = 100
+        np.random.seed(42)  # For reproducibility
+        
+        # Categories and their colors
+        categories = {
+            'animals': ['dog', 'cat', 'bird', 'fish', 'rabbit', 'horse'],
+            'vehicles': ['car', 'boat', 'plane', 'train', 'bus', 'truck'],
+            'food': ['apple', 'banana', 'orange', 'pizza', 'burger', 'pasta'],
+            'nature': ['mountain', 'ocean', 'forest', 'river', 'desert', 'cloud']
+        }
+        
+        category_colors = {
+            'animals': BLUE_D,
+            'vehicles': GREEN_D,
+            'food': ORANGE,
+            'nature': PURPLE_D
+        }
+        
+        # Generate initial spaces
+        image_points, text_points = self.generate_initial_spaces(categories)
+        
+        # Create visualization layout
+        title = Text("Contrastive Learning Space Alignment", font_size=40, color=BLUE)
+        title.to_edge(UP, buff=0.3)
+        self.play(Write(title))
+        
+        # Add subtitle with explanation
+        subtitle = Text("Aligning visual and textual representations in a shared space", 
+                        font_size=24, color=LIGHT_GREY)
+        subtitle.next_to(title, DOWN, buff=0.2)
+        self.play(FadeIn(subtitle))
+        
+        # Create two coordinate systems with improved styling
+        axes_config = {
+            "x_range": [0, 1, 0.2],
+            "y_range": [0, 1, 0.2],
+            "x_length": 4,
+            "y_length": 4,
+            "axis_config": {
+                "color": GREY,
+                "stroke_width": 2,
+                "include_ticks": True,
+                "include_tip": True,
+            },
+        }
+        
+        image_axes = Axes(**axes_config).scale(1.5)
+        text_axes = Axes(**axes_config).scale(1.5)
+        
+        # Add grid lines for better spatial reference
+        image_grid = image_axes.get_grid(color=BLUE_E, opacity=0.2)
+        text_grid = text_axes.get_grid(color=BLUE_E, opacity=0.2)
+        
+        # Position the axes
+        image_axes.move_to(LEFT * 3.5)
+        text_axes.move_to(RIGHT * 3.5)
+        
+        # Add labels to the axes with improved styling
+        image_label = Text("Image Embedding Space", font_size=28, color=WHITE)
+        image_label.next_to(image_axes, UP, buff=0.2)
+        
+        text_label = Text("Text Embedding Space", font_size=28, color=WHITE)
+        text_label.next_to(text_axes, UP, buff=0.2)
+        
+        # Add x and y labels
+        image_x_label = Text("Dimension 1", font_size=16, color=GREY)
+        image_x_label.next_to(image_axes, DOWN, buff=0.2)
+        image_y_label = Text("Dimension 2", font_size=16, color=GREY)
+        image_y_label.next_to(image_axes, LEFT, buff=0.2).rotate(PI/2)
+        
+        text_x_label = Text("Dimension 1", font_size=16, color=GREY)
+        text_x_label.next_to(text_axes, DOWN, buff=0.2)
+        text_y_label = Text("Dimension 2", font_size=16, color=GREY)
+        text_y_label.next_to(text_axes, LEFT, buff=0.2).rotate(PI/2)
+        
+        # Create a background rectangle for better visual separation
+        image_background = BackgroundRectangle(image_axes, color=BLACK, fill_opacity=0.1)
+        text_background = BackgroundRectangle(text_axes, color=BLACK, fill_opacity=0.1)
+        
+        # Add everything to the scene with smoother animations
+        self.play(
+            FadeIn(image_background, text_background),
+            Create(image_axes),
+            Create(text_axes),
+            run_time=1.5
+        )
+        
+        self.play(
+            FadeIn(image_grid, text_grid),
+            Write(image_label),
+            Write(text_label),
+            Write(image_x_label),
+            Write(image_y_label),
+            Write(text_x_label),
+            Write(text_y_label),
+            run_time=1.5
+        )
+        
+        # Add legend for categories
+        legend_items = VGroup()
+        legend_title = Text("Categories:", font_size=20).to_edge(RIGHT, buff=1.0).shift(UP * 2)
+        legend_items.add(legend_title)
+        
+        for i, (category, color) in enumerate(category_colors.items()):
+            dot = Dot(color=color, radius=0.1)
+            label = Text(category.capitalize(), font_size=16)
+            item = VGroup(dot, label)
+            label.next_to(dot, RIGHT, buff=0.2)
+            item.arrange(RIGHT, buff=0.2)
+            item.next_to(legend_title, DOWN, buff=0.3 + i * 0.4, aligned_edge=LEFT)
+            legend_items.add(item)
+        
+        self.play(FadeIn(legend_items))
+        
+        # Create dots for each item
+        image_dots = {}
+        text_dots = {}
+        image_labels = {}
+        text_labels = {}
+        
+        # Create dots and labels for image space
+        for category, items in categories.items():
+            color = category_colors[category]
+            for item in items:
+                # Convert the coordinates to Manim points
+                point = image_points[item]
+                position = image_axes.c2p(point[0], point[1])
+                
+                # Create dot with pulsing effect for initial appearance
+                dot = Dot(position, color=color, radius=0.08)
+                glow_dot = Dot(position, color=color, radius=0.12, fill_opacity=0.5)
+                
+                label = Text(item.upper(), font_size=14, color=WHITE)
+                label.next_to(dot, UP, buff=0.1)
+                
+                image_dots[item] = dot
+                image_labels[item] = label
+                
+                self.play(
+                    FadeIn(dot),
+                    FadeIn(label),
+                    GrowFromCenter(glow_dot, rate_func=there_and_back),
+                    run_time=0.1
+                )
+                self.remove(glow_dot)  # Remove the glow effect after animation
+        
+        # Create dots and labels for text space
+        for category, items in categories.items():
+            color = category_colors[category]
+            for item in items:
+                # Convert the coordinates to Manim points
+                point = text_points[item]
+                position = text_axes.c2p(point[0], point[1])
+                
+                # Create square dots for text space to distinguish from image space
+                dot = Square(side_length=0.15, color=color, fill_opacity=0.8).move_to(position)
+                glow_dot = Square(side_length=0.2, color=color, fill_opacity=0.4).move_to(position)
+                
+                label = Text(f"'{item.upper()}'", font_size=14, color=WHITE)
+                label.next_to(dot, UP, buff=0.1)
+                
+                text_dots[item] = dot
+                text_labels[item] = label
+                
+                self.play(
+                    FadeIn(dot),
+                    FadeIn(label),
+                    GrowFromCenter(glow_dot, rate_func=there_and_back),
+                    run_time=0.1
+                )
+                self.remove(glow_dot)
+        
+        # Create progress tracker with improved styling
+        progress_bar_bg = Rectangle(height=0.3, width=10, fill_color=GREY_D, fill_opacity=0.4, 
+                                   stroke_color=WHITE, stroke_width=1)
+        progress_bar_bg.to_edge(DOWN, buff=0.5)
+        progress_bar = Rectangle(height=0.3, width=0, fill_color=BLUE_B, fill_opacity=1,
+                                stroke_width=0)
+        progress_bar.align_to(progress_bar_bg, LEFT)
+        progress_bar.to_edge(DOWN, buff=0.5)
+        
+        progress_label = Text("Training Progress: 0%", font_size=20)
+        progress_label.next_to(progress_bar_bg, UP, buff=0.2)
+        
+        self.play(
+            Create(progress_bar_bg),
+            Create(progress_bar),
+            Write(progress_label)
+        )
+        
+        # Add explanation text with more detailed information
+        explanation = Text("Starting with unaligned embedding spaces", font_size=24)
+        explanation.next_to(progress_label, UP, buff=0.3)
+        self.play(Write(explanation))
+        
+        # Draw initial connecting lines to show misalignment
+        connecting_lines = []
+        for item in image_points:
+            if item in text_points:
+                img_pos = image_dots[item].get_center()
+                txt_pos = text_dots[item].get_center()
+                line = DashedLine(img_pos, txt_pos, color=GREY_D, dash_length=0.05, stroke_opacity=0.3)
+                connecting_lines.append(line)
+        
+        self.play(
+            *[Create(line) for line in connecting_lines],
+            run_time=1.5
+        )
+        
+        # Show explanation of misalignment
+        misalignment_text = Text("Notice the misalignment between corresponding points", 
+                              font_size=20, color=YELLOW)
+        misalignment_text.to_edge(DOWN, buff=1.2)
+        self.play(FadeIn(misalignment_text))
+        self.wait(1)
+        self.play(FadeOut(misalignment_text))
+        
+        # Animation loop - transform spaces with improved visual feedback
+        for step in range(1, total_steps + 1):
+            # Update explanation text to be more informative
+            if step < total_steps // 4:
+                new_explanation = Text("Applying contrastive learning...", font_size=24)
+            elif step < total_steps // 2:
+                new_explanation = Text("Similar concepts being pulled together...", font_size=24)
+            elif step < 3 * total_steps // 4:
+                new_explanation = Text("Fine-tuning the alignment...", font_size=24)
+            else:
+                new_explanation = Text("Nearing optimal embedding alignment", font_size=24)
+                
+            if step == total_steps:
+                new_explanation = Text("Spaces aligned! Corresponding embeddings now match", font_size=24, color=GREEN)
+            
+            new_explanation.next_to(progress_label, UP, buff=0.3)
+            
+            # Update progress bar with smoother animation
+            progress_percentage = step / total_steps
+            new_progress = Rectangle(
+                height=0.3, 
+                width=10 * progress_percentage, 
+                fill_color=interpolate_color(BLUE_B, GREEN, progress_percentage),
+                fill_opacity=1,
+                stroke_width=0
+            )
+            new_progress.align_to(progress_bar_bg, LEFT)
+            new_progress.to_edge(DOWN, buff=0.5)
+            
+            new_progress_label = Text(f"Training Progress: {int(progress_percentage * 100)}%", font_size=20)
+            new_progress_label.next_to(progress_bar_bg, UP, buff=0.2)
+            
+            # Calculate interpolation parameter with easing for more natural movement
+            t = smooth(step / total_steps)  # Using a smooth easing function
+            
+            # Create animations for all dots
+            dot_animations = []
+            label_animations = []
+            line_animations = []
+            
+            for idx, item in enumerate(image_points):
+                if item in text_points:
+                    # Calculate target position (center point)
+                    img_point = image_points[item]
+                    txt_point = text_points[item]
+                    
+                    # Add a small random perturbation to simulate training randomness
+                    jitter = np.random.normal(0, 0.01 * (1-t), 2)  # Jitter decreases as alignment improves
+                    target = (img_point + txt_point) / 2 + jitter
+                    
+                    # Calculate new positions with easing
+                    new_img_pos = img_point * (1 - t) + target * t
+                    new_txt_pos = txt_point * (1 - t) + target * t
+                    
+                    # Convert to Manim coordinates
+                    new_img_manim_pos = image_axes.c2p(new_img_pos[0], new_img_pos[1])
+                    new_txt_manim_pos = text_axes.c2p(new_txt_pos[0], new_txt_pos[1])
+                    
+                    # Add animations to move dots
+                    dot_animations.append(image_dots[item].animate.move_to(new_img_manim_pos))
+                    dot_animations.append(text_dots[item].animate.move_to(new_txt_manim_pos))
+                    
+                    # Add animations to move labels
+                    label_animations.append(image_labels[item].animate.next_to(new_img_manim_pos, UP, buff=0.1))
+                    label_animations.append(text_labels[item].animate.next_to(new_txt_manim_pos, UP, buff=0.1))
+                    
+                    # Update connecting lines
+                    new_line = DashedLine(new_img_manim_pos, new_txt_manim_pos, 
+                                         color=GREY_D, 
+                                         dash_length=0.05,
+                                         stroke_opacity=0.3 + 0.7 * (1-distance(new_img_manim_pos, new_txt_manim_pos)/5))
+                    line_animations.append(Transform(connecting_lines[idx], new_line))
+            
+            # Play all animations together with appropriate timing
+            run_time = 0.5 if step < total_steps - 10 else 1.0  # Slow down at the end for dramatic effect
+            
+            self.play(
+                *dot_animations,
+                *label_animations,
+                *line_animations,
+                Transform(progress_bar, new_progress),
+                Transform(progress_label, new_progress_label),
+                Transform(explanation, new_explanation),
+                run_time=run_time
+            )
+        
+        # Final state - highlight the aligned points
+        self.wait(1)
+        
+        # Highlight the successful alignment with glowing effect
+        highlight_animations = []
+        for item in image_points:
+            if item in text_points:
+                img_pos = image_dots[item].get_center()
+                txt_pos = text_dots[item].get_center()
+                
+                # Create glowing effect for aligned points
+                img_glow = Dot(img_pos, color=YELLOW, radius=0.15, fill_opacity=0.6)
+                txt_glow = Dot(txt_pos, color=YELLOW, radius=0.15, fill_opacity=0.6)
+                
+                highlight_animations.append(FadeIn(img_glow, rate_func=there_and_back))
+                highlight_animations.append(FadeIn(txt_glow, rate_func=there_and_back))
+        
+        self.play(
+            *highlight_animations,
+            run_time=2
+        )
+        
+        # Final explanation with more detailed conclusion
+        final_explanation = MarkupText(
+            f"<span color='{YELLOW}'>Contrastive learning</span> has successfully aligned the embedding spaces",
+            font_size=24
+        )
+        final_explanation.next_to(progress_label, UP, buff=0.3)
+        
+        final_detail = Text(
+            "This alignment enables cross-modal retrieval and transfer learning",
+            font_size=20, color=BLUE_C
+        )
+        final_detail.next_to(final_explanation, UP, buff=0.2)
+        
+        self.play(
+            Transform(explanation, final_explanation),
+            FadeIn(final_detail)
+        )
+        
+        # Add citation
+        citation = Text(
+            "Animation by Mikey Bee - 2025",
+            font_size=14, color=GREY_C
+        )
+        citation.to_edge(DOWN+RIGHT, buff=0.3)
+        self.play(FadeIn(citation))
+        
+        # Hold final state
+        self.wait(3)
+    
+    def generate_initial_spaces(self, categories):
+        """Generate initial image and text spaces with items clustered by category"""
+        # Create image space - clustered by category
+        image_points = {}
+        # Place each category in a different quadrant
+        category_centers = {
+            'animals': np.array([0.75, 0.75]),
+            'vehicles': np.array([0.25, 0.25]),
+            'food': np.array([0.25, 0.75]),
+            'nature': np.array([0.75, 0.25])
+        }
+        
+        for category, items in categories.items():
+            for item in items:
+                image_points[item] = category_centers[category] + np.random.normal(0, 0.07, 2)
+        
+        # Create text space - differently oriented
+        text_points = {}
+        
+        # Create a rotation and scaling transformation
+        rotation = np.array([
+            [0, -1],
+            [1, 0]
+        ])
+        
+        for item in image_points:
+            # Apply rotation and shift to create a differently oriented space
+            text_points[item] = rotation @ image_points[item] + np.array([0.1, 0.1])
+        
+        return image_points, text_points
+
+# Helper function to calculate distance between points
+def distance(p1, p2):
+    return np.sqrt(np.sum((np.array(p1) - np.array(p2))**2))

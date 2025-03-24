@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contrastive Learning Visualization Viewer</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: #2563eb;
+      font-size: 2rem;
+    }
+    
+    .section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h2 {
+      color: #1e40af;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+    
+    .animation {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .animation img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .slider-container {
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    
+    .slider {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    .frames {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .frame-display {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .frame-display img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .combined-view {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .combined-view img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    button:hover {
+      background-color: #1e40af;
+    }
+    
+    .frame-counter {
+      margin: 0 20px;
+      font-weight: bold;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Contrastive Learning Visualization</h1>
+    <p>Interactive viewer for exploring the alignment of image and text embedding spaces</p>
+  </header>
+  
+  <div class="section">
+    <h2>Animated Visualization</h2>
+    <div class="animation">
+      <img src="contrastive_viz/contrastive_learning_animation.gif" alt="Contrastive Learning Animation">
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>Frame-by-Frame Exploration</h2>
+    <div class="slider-container">
+      <input type="range" min="0" max="100" value="0" class="slider" id="frameSlider">
+      <div class="controls">
+        <button id="playButton">Play</button>
+        <button id="prevButton">Previous</button>
+        <span class="frame-counter">Frame: <span id="currentFrame">0</span>/100</span>
+        <button id="nextButton">Next</button>
+        <button id="resetButton">Reset</button>
+      </div>
+    </div>
+    <div class="frames">
+      <div class="frame-display">
+        <img id="frameDisplay" src="contrastive_viz/step_000.png" alt="Contrastive Learning Frame">
+      </div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>Final Aligned Space</h2>
+    <div class="combined-view">
+      <img src="contrastive_viz/combined_space.png" alt="Combined Space View">
+    </div>
+  </div>
+  
+  <footer>
+    <p>Created by Mikey Bee © 2025 | Contrastive Learning Visualization</p>
+  </footer>
+
+  <script>
+    // Configuration
+    const totalFrames = 100;
+    const framePrefix = "contrastive_viz/step_";
+    const frameExt = ".png";
+    
+    // Elements
+    const frameSlider = document.getElementById("frameSlider");
+    const currentFrameDisplay = document.getElementById("currentFrame");
+    const frameImage = document.getElementById("frameDisplay");
+    const playButton = document.getElementById("playButton");
+    const prevButton = document.getElementById("prevButton");
+    const nextButton = document.getElementById("nextButton");
+    const resetButton = document.getElementById("resetButton");
+    
+    // State
+    let currentFrame = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    
+    // Update frame display
+    function updateFrame() {
+      // Format frame number with leading zeros
+      const paddedFrame = String(currentFrame).padStart(3, '0');
+      frameImage.src = `${framePrefix}${paddedFrame}${frameExt}`;
+      currentFrameDisplay.textContent = currentFrame;
+      frameSlider.value = currentFrame;
+    }
+    
+    // Play/pause animation
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      
+      if (isPlaying) {
+        playButton.textContent = "Pause";
+        playInterval = setInterval(() => {
+          currentFrame = (currentFrame + 1) % (totalFrames + 1);
+          updateFrame();
+        }, 200); // 200ms between frames = 5 FPS
+      } else {
+        playButton.textContent = "Play";
+        clearInterval(playInterval);
+      }
+    }
+    
+    // Event listeners
+    frameSlider.addEventListener("input", () => {
+      // Stop playing if user is manually controlling
+      if (isPlaying) {
+        togglePlay();
+      }
+      
+      currentFrame = parseInt(frameSlider.value);
+      updateFrame();
+    });
+    
+    playButton.addEventListener("click", togglePlay);
+    
+    prevButton.addEventListener("click", () => {
+      if (isPlaying) togglePlay();
+      currentFrame = Math.max(0, currentFrame - 1);
+      updateFrame();
+    });
+    
+    nextButton.addEventListener("click", () => {
+      if (isPlaying) togglePlay();
+      currentFrame = Math.min(totalFrames, currentFrame + 1);
+      updateFrame();
+    });
+    
+    resetButton.addEventListener("click", () => {
+      if (isPlaying) togglePlay();
+      currentFrame = 0;
+      updateFrame();
+    });
+    
+    // Initialize
+    updateFrame();
+  </script>
+</body>
+</html>
